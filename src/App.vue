@@ -19,7 +19,7 @@
 
         <!-- Chat messages -->
         <div class="flex-grow px-6 py-5 overflow-y-auto" id="messages">
-          <transition-group name="list" tag="ul">
+          <transition-group name="list" tag="ul" v-if="messages.length > 0">
             <li
               v-for="message in messages"
               v-bind:key="message"
@@ -42,6 +42,28 @@
               </div>
             </li>
           </transition-group>
+          <div v-else class="flex items-center justify-center w-full h-full">
+            <svg
+              class="w-16 h-16 mr-3 -ml-1 text-white animate-spin"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          </div>
           <div ref="stopgap"></div>
         </div>
         <div
@@ -146,6 +168,7 @@ export default {
   async mounted() {
     let currentUser = await Auth.currentAuthenticatedUser();
     let vm = this;
+
     API.graphql(
       graphqlOperation(subscriptions.onCreateMessages, {
         owner: currentUser.username,
@@ -155,8 +178,12 @@ export default {
         vm.messages.push(action.value.data.onCreateMessages);
       },
     });
+    let attempts = 0;
+    while (this.messages.length === 0 && attempts < 10) {
+      this.messages = await DataStore.query(Messages);
+      attempts++;
+    }
 
-    this.messages = await DataStore.query(Messages);
     this.$nextTick(() => {
       this.$refs.stopgap.scrollIntoView({ behavior: "smooth" });
     });
@@ -187,6 +214,7 @@ export default {
   watch: {
     messages: {
       handler: function () {
+        this.messages.sort((a, b) => (a.createdAt > b.createdAt ? 1 : -1));
         this.$nextTick(() => {
           this.$refs.stopgap.scrollIntoView({ behavior: "smooth" });
         });
