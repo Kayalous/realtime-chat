@@ -19,7 +19,7 @@
 
         <!-- Chat messages -->
         <div class="flex-grow px-6 py-5 overflow-y-auto" id="messages">
-          <transition-group name="list" tag="ul" v-if="messages.length > 0">
+          <transition-group name="list" tag="ul" v-if="messages">
             <li
               v-for="message in messages"
               v-bind:key="message"
@@ -139,15 +139,15 @@ import { onAuthUIStateChange } from "@aws-amplify/ui-components";
 import { DataStore } from "@aws-amplify/datastore";
 import { Messages } from "./models";
 import moment from "moment";
-import { Auth, API, graphqlOperation } from "aws-amplify";
-// import * as queries from "./graphql/queries";
-// import * as mutations from "./graphql/mutations";
+import { API, graphqlOperation } from "aws-amplify";
+import * as queries from "./graphql/queries";
+// // import * as mutations from "./graphql/mutations";
 import * as subscriptions from "./graphql/subscriptions";
 
 export default {
   name: "AuthStateApp",
 
-  created() {
+  async created() {
     this.unsubscribeAuth = onAuthUIStateChange((authState, authData) => {
       this.authState = authState;
       this.user = authData;
@@ -160,33 +160,17 @@ export default {
       unsubscribeAuth: undefined,
       messages: [],
       body: "",
+      attempts: 0,
     };
   },
-  beforeUnmount() {
-    this.unsubscribeAuth();
-  },
   async mounted() {
-    let currentUser = await Auth.currentAuthenticatedUser();
-    let vm = this;
-
-    API.graphql(
-      graphqlOperation(subscriptions.onCreateMessages, {
-        owner: currentUser.username,
-      })
-    ).subscribe({
-      next: (action) => {
-        vm.messages.push(action.value.data.onCreateMessages);
-      },
-    });
-    let attempts = 0;
-    while (this.messages.length === 0 && attempts < 10) {
-      this.messages = await DataStore.query(Messages);
-      attempts++;
-    }
-
+    this.initFetch();
     this.$nextTick(() => {
       this.$refs.stopgap.scrollIntoView({ behavior: "smooth" });
     });
+  },
+  beforeUnmount() {
+    this.unsubscribeAuth();
   },
 
   methods: {
@@ -208,6 +192,20 @@ export default {
 
     date(date) {
       return moment(date).fromNow();
+    },
+
+    async initFetch() {
+      let vm = this;
+      API.graphql(graphqlOperation(subscriptions.onCreateMessages)).subscribe({
+        next: (action) => {
+          vm.messages.push(action.value.data.onCreateMessages);
+        },
+      });
+
+      let { data } = await API.graphql(graphqlOperation(queries.listMessagess));
+      data.listMessagess.items.forEach((item) => {
+        this.messages.push(item);
+      });
     },
   },
 
