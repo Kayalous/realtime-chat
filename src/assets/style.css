@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap");
+
+* {
+  font-family: "Nunito", sans-serif;
+}
+
+:root {
+  --amplify-primary-color: #ff5885;
+  --amplify-primary-contrast: var(–amplify-white);
+  --amplify-primary-tint: #fd7095;
+  --amplify-primary-shade: #fa3c6f;
+  --amplify-secondary-color: #fb5e84;
+  --amplify-secondary-contrast: var(–amplify-white);
+  --amplify-secondary-tint: #31465f;
+  --amplify-secondary-shade: #1f2a37;
+  --amplify-tertiary-color: #5d8aff;
+  --amplify-tertiary-contrast: var(–amplify-white);
+  --amplify-tertiary-tint: #7da1ff;
+  --amplify-tertiary-shade: #537be5;
+  --amplify-grey: #828282;
+  --amplify-light-grey: #c4c4c4;
+  --amplify-white: #1e1536;
+  --amplify-red: #dd3f5b;
+}
